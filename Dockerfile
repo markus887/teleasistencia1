@@ -1,7 +1,7 @@
-# Imagen base oficial de PHP con extensiones necesarias
+# Usa una imagen oficial de PHP con FPM
 FROM php:8.2-fpm
 
-# Instala dependencias de sistema
+# Instala extensiones necesarias y herramientas básicas
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
@@ -9,24 +9,22 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     libzip-dev \
     zip \
-    && docker-php-ext-install pdo pdo_pgsql zip
+    && docker-php-ext-install pdo pdo_mysql pdo_pgsql zip
 
-# Instala Composer
+# Instala Composer globalmente
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Copia el código al contenedor
+# Copia el código de la app al contenedor
 COPY . /var/www/html
 
+# Establece el directorio de trabajo
 WORKDIR /var/www/html
 
 # Instala dependencias PHP
 RUN composer install --no-dev --optimize-autoloader
 
-# Genera clave y cachea configuración
-RUN php artisan key:generate && php artisan config:cache
-
-# Expone el puerto que usará Laravel
+# Expone el puerto por el que Laravel escuchará
 EXPOSE 8000
 
-# Comando de inicio
+# Comando para arrancar la app (Laravel usará variables desde Render)
 CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
